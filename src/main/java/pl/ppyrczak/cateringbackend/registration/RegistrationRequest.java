@@ -13,9 +13,9 @@ import java.util.Set;
 @EqualsAndHashCode
 @ToString
 public class RegistrationRequest {
-    private final String firstName;
-    private final String lastName;
-    private final String username;
+    private final String name;
+    private final String surname;
+    private final String email;
     private final String password;
     private final Set<? extends GrantedAuthority> authorities;
 }
