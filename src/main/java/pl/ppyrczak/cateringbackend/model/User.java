@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import pl.ppyrczak.cateringbackend.role.UserRole;
 
 import javax.persistence.Id;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,9 +19,13 @@ import java.util.stream.Collectors;
 public class User implements UserDetails {
     @Id
     private String id;
+    @NotBlank(message = "You have to pass name")
     private String name;
+    @NotBlank(message = "You have to pass surname")
     private String surname;
+    @NotBlank(message = "You have to pass email")
     private String email;
+    @NotBlank(message = "You have to pass password")
     private String password;
     @DBRef
     private Set<UserRole> roles = new HashSet<>();
