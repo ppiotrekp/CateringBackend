@@ -6,5 +6,6 @@ import pl.ppyrczak.cateringbackend.model.User;
 import java.util.Optional;
 
 public interface UserRepository extends MongoRepository<User, String> {
-    Optional<User> findByUsername(String e);
+    Optional<User> findByEmail(String e);
+    Boolean existsByEmail(String email);
 }
