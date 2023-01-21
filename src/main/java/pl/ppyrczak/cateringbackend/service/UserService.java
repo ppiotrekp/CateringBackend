@@ -2,6 +2,7 @@ package pl.ppyrczak.cateringbackend.service;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -14,11 +15,7 @@ import pl.ppyrczak.cateringbackend.role.EUserRole;
 import pl.ppyrczak.cateringbackend.role.RoleRepository;
 import pl.ppyrczak.cateringbackend.role.UserRole;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -32,7 +29,20 @@ public class UserService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return null;
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (user == null) {
+            log.error("User not found");
+        } else {
+            log.info("User found");
+        }
+
+        Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        user.getRoles()
+                .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.getName().toString())));
+        return new org.springframework.security.core.userdetails.User(user.getUsername(),
+                user.getPassword(),
+                authorities);
     }
 
     public User signUpUser(User user) {
@@ -56,6 +66,8 @@ public class UserService implements UserDetailsService {
     public User addUser(User user) {
         UserRole userRole = roleRepository.findByName(EUserRole.valueOf("ROLE_ADMIN"));
         roles.add(userRole);
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
         user.setRoles(roles);
         return userRepository.insert(user);
     }
