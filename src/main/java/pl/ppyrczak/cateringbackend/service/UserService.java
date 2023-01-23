@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import pl.ppyrczak.cateringbackend.exception.EmailExistsException;
 import pl.ppyrczak.cateringbackend.model.User;
 import pl.ppyrczak.cateringbackend.repository.UserRepository;
 import pl.ppyrczak.cateringbackend.role.EUserRole;
@@ -16,6 +17,7 @@ import pl.ppyrczak.cateringbackend.role.RoleRepository;
 import pl.ppyrczak.cateringbackend.role.UserRole;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 @AllArgsConstructor
@@ -64,11 +66,32 @@ public class UserService implements UserDetailsService {
     }
 
     public User addUser(User user) {
-        UserRole userRole = roleRepository.findByName(EUserRole.valueOf("ROLE_ADMIN"));
+        UserRole userRole = roleRepository.findByName(EUserRole.ROLE_CLIENT).get();
         roles.add(userRole);
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
         user.setRoles(roles);
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new EmailExistsException();
+        }
         return userRepository.insert(user);
+    }
+
+    public User getUser(String email) {
+        return userRepository.findByEmail(email).orElseThrow();
+    }
+
+    public void changeEnabledStatus(String id) {
+        User user = userRepository.findById(id).get();
+        user.setEnabled(!user.isEnabled());
+        userRepository.save(user);
+    }
+
+    public Stream<String> getUserIdByEmail(String email) {
+        Optional<User> user = Optional.ofNullable(userRepository.findUserByEmail(email));
+        System.out.println(user);
+        Stream<String> id = user.stream().map(User::getId);
+        System.out.println("id" + id);
+        return id;
     }
 }

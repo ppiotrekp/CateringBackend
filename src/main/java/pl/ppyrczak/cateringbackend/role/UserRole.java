@@ -17,7 +17,6 @@ public class UserRole {
     @Id
     private String id;
 
-    @Enumerated(value = EnumType.STRING)
     private EUserRole name;
 
     public UserRole(EUserRole name) {

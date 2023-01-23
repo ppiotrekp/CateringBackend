@@ -27,6 +27,7 @@ public class User implements UserDetails {
     private String email;
     @NotBlank(message = "You have to pass password")
     private String password;
+    private boolean enabled = true;
     @DBRef
     private Set<UserRole> roles = new HashSet<>();
 
@@ -78,6 +79,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }
