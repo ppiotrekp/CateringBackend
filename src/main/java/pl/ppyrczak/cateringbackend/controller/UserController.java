@@ -4,7 +4,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +18,6 @@ import org.springframework.web.bind.annotation.*;
 import pl.ppyrczak.cateringbackend.login.AuthRequest;
 import pl.ppyrczak.cateringbackend.login.AuthResponse;
 import pl.ppyrczak.cateringbackend.model.User;
-import pl.ppyrczak.cateringbackend.repository.UserRepository;
-import pl.ppyrczak.cateringbackend.role.UserRole;
 import pl.ppyrczak.cateringbackend.service.UserService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,9 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
@@ -70,11 +67,12 @@ public class UserController {
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword()));
             org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authenticate.getPrincipal();
 
+            System.out.println(authenticate.getAuthorities());
             Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
             String token = JWT.create()
                     .withSubject(user.getUsername())
                     .withIssuer("Issuer")
-                    .withExpiresAt(new Date(System.currentTimeMillis() + 1 * 60 * 1000))
+                    .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
                     .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                     .sign(algorithm);
 
@@ -85,13 +83,13 @@ public class UserController {
                     .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                     .sign(algorithm);
 
-
             AuthResponse authResponse = new AuthResponse(token, refreshToken);
             return ResponseEntity.ok(authResponse);
 
-        } catch (UsernameNotFoundException exception) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
     }
 
     @PostMapping("/refresh-token")
@@ -110,7 +108,7 @@ public class UserController {
                 String accessToken = JWT.create()
                         .withSubject(user.getUsername())
                         .withIssuer("Issuer")
-                        .withExpiresAt(new Date(System.currentTimeMillis() + 10 * 60 * 1000))
+                        .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
                         .withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
                         .sign(algorithm);
 
@@ -121,16 +119,22 @@ public class UserController {
                 AuthResponse authResponse = new AuthResponse(accessToken, refreshToken);
                 return ResponseEntity.ok(authResponse);
 
-            } catch (Exception e) {
-                response.setHeader("error", e.getMessage());
-                response.setStatus(FORBIDDEN.value());
-                //response.sendError(FORBIDDEN.value());
-                Map<String, String> error = new HashMap<>();
-                error.put("error_message", e.getMessage());
-                response.setContentType(APPLICATION_JSON_VALUE);
-                new ObjectMapper().writeValue(response.getOutputStream(), error);
+            } catch (UsernameNotFoundException exception) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         }
-        return null;
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @PutMapping("/users/{id}")
+    @CrossOrigin(origins = "http://localhost:4200")
+    public void changeEnabledStatus(@PathVariable String id) {
+        userService.changeEnabledStatus(id);
+    }
+
+    @GetMapping("/user/{email}")
+    public Stream<String> getLoggedUserId(@PathVariable String email) {
+        return userService.getUserIdByEmail(email);
     }
 }
