@@ -17,7 +17,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import pl.ppyrczak.cateringbackend.jwt.JwtAuthenticationFilter;
 import pl.ppyrczak.cateringbackend.repository.UserRepository;
 
-import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.*;
 
 @Configuration
 @EnableWebSecurity
@@ -34,10 +34,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable();
         http.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues());
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
         http.authorizeRequests()
                 .antMatchers("/login").permitAll()
                 .antMatchers("/signup/**").permitAll()
-//                .and().authorizeRequests().antMatchers(GET, "/api/dishes/page?/").authenticated();
+                .antMatchers("/refresh-token").permitAll()
+                .antMatchers("/api/catering/guest/**").permitAll()
+                .antMatchers(GET, "/api/catering/manager?/").hasAnyAuthority("EUserRole.ROLE_MODERATOR")
+//                .antMatchers(DELETE, "/api/catering/dish/**").permitAll()
+                .antMatchers(PUT, "/api/catering/dish/**").hasAnyAuthority("EUserRole.ROLE_MODERATOR", "EUserRole.ROLE_ADMIN")
+                .antMatchers(GET, "/users").hasAnyAuthority("EUserRole.ROLE_ADMIN")
                 .anyRequest().authenticated();
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
     }
