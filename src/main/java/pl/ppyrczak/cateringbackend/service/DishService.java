@@ -31,4 +31,22 @@ public class DishService {
     public void removeDish(String id) {
         dishRepository.deleteById(id);
     }
+
+    public Dish updateDish(Dish dishToUpdate, String id) {
+        return dishRepository.findById(id)
+                .map(dish -> {
+                    dish.setCuisine(dishToUpdate.getCuisine());
+                    dish.setMeal(dishToUpdate.getMeal());
+                    dish.setName(dishToUpdate.getName());
+                    dish.setPrice(dishToUpdate.getPrice());
+                    dish.setLimit(dishToUpdate.getLimit());
+                    dish.setIngredients(dishToUpdate.getIngredients());
+                    dish.setImageUrl(dishToUpdate.getImageUrl());
+                    dish.setDescription(dishToUpdate.getDescription());
+                    return dishRepository.save(dish);
+                })
+                .orElseGet(() -> {
+                    return addDish(dishToUpdate);
+                });
+    }
 }

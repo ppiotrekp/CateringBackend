@@ -19,7 +19,7 @@ public class Dish {
     private String name;
     private Cuisine cuisine;
     private Meal meal;
-    private List<String> ingredients;
+    private String ingredients;
     private int limit;
     private BigDecimal price;
     private String description;
@@ -32,7 +32,7 @@ public class Dish {
                 String name,
                 Cuisine cuisine,
                 Meal meal,
-                List<String> ingredients,
+                String ingredients,
                 int limit,
                 BigDecimal price,
                 String description) {
